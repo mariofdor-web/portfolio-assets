@@ -69,6 +69,21 @@ body { overflow-x: hidden; }
 .gallery img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.8s ease; }
 .gallery img.active { opacity: 1; }
 
+
+.card-btn {
+  display: inline-block;
+  margin-top: 24px;
+  padding: 10px 22px;
+  border: 1px solid #4a8a6a;
+  color: #4a8a6a;
+  font-family: 'Open Sans', sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: background 0.3s, color 0.3s;
+}
+.card-btn:hover { background: #4a8a6a; color: #0d1f1a; }
 </style>
 </head>
 <body>
@@ -163,6 +178,7 @@ body { overflow-x: hidden; }
         <h2 class="card-title"><span class="reveal-line"><span>Humanity</span></span></h2>
         <div class="progress-dots"></div>
         <p class="card-text"><span class="reveal-line"><span>The earthquake hit on August 10. Within hours, I designed and connected a page for users to report missing relatives — public forms connected to a real-time database. One week later, that same data became a report on the victims.</span></span></p>
+        <a href="https://www.elespectador.com/colombia/victimas-del-terremoto-las-vidas-que-perdio-colombia/" target="_blank" class="card-btn">Read project →</a>
       </div>
       <div class="card-right">
         <div class="card-media">
