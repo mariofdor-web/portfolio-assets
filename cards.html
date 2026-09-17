@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mario Rodriguez - Portfolio</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap');
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0a0f0d; font-family: 'Open Sans', sans-serif; color: #c8cec9; }
+.spacer { height: 60vh; display: flex; align-items: center; justify-content: center; color: #444; font-size: 13px; letter-spacing: 0.1em; }
+.cards-scroll-zone { position: relative; height: 420vh; }
+.cards-sticky { position: sticky; top: 0; height: 100vh; background: #0d1f1a; overflow: hidden; }
+.card-slot { position: absolute; inset: 0; display: flex; align-items: center; padding: 0 24px; gap: 40px; pointer-events: none; visibility: hidden; }
+.card-slot.active { pointer-events: auto; visibility: visible; }
+.card-slot.text-only .card-left { flex: 0 0 50%; }
+.card-left { flex: 0 0 36%; }
+.card-right { flex: 1; }
+.reveal-line { display: block; overflow: hidden; }
+.reveal-line span { display: block; transform: translateX(-110%); transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1); }
+.card-slot.active .reveal-line:nth-child(1) span { transition-delay: 0.00s; transform: translateX(0); }
+.card-slot.active .reveal-line:nth-child(2) span { transition-delay: 0.07s; transform: translateX(0); }
+.card-slot.active .reveal-line:nth-child(3) span { transition-delay: 0.14s; transform: translateX(0); }
+.card-slot.active .reveal-line:nth-child(4) span { transition-delay: 0.21s; transform: translateX(0); }
+.card-slot.active .reveal-line:nth-child(5) span { transition-delay: 0.28s; transform: translateX(0); }
+.card-slot.active .reveal-line:nth-child(6) span { transition-delay: 0.35s; transform: translateX(0); }
+.card-right { opacity: 0; transform: translateX(30px); transition: opacity 0.7s ease 0.25s, transform 0.7s cubic-bezier(0.16,1,0.3,1) 0.25s; }
+.card-slot.active .card-right { opacity: 1; transform: translateX(0); }
+.progress-dots { display: flex; flex-direction: row; gap: 8px; margin-bottom: 24px; }
+.dot { width: 5px; height: 5px; border-radius: 50%; background: #2a4a3a; transition: background 0.3s, transform 0.3s; }
+.dot.active { background: #4a8a6a; transform: scale(1.6); }
+.card-label { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: #4a8a6a; margin-bottom: 16px; }
+.card-title { font-size: clamp(2.8rem, 5vw, 5rem); font-weight: 700; color: #dde8e2; margin-bottom: 24px; line-height: 1.05; }
+.card-text { font-size: clamp(0.85rem, 1.1vw, 1rem); line-height: 1.8; color: #7a9a8a; }
+.card-media { width: 100%; aspect-ratio: 16/10; border-radius: 3px; overflow: hidden; background: #1a2e24; position: relative; }
+.card-media video, .card-media img { width: 100%; height: 100%; object-fit: cover; }
+.gallery { position: relative; width: 100%; aspect-ratio: 16/10; border-radius: 3px; overflow: hidden; background: #1a2e24; }
+.gallery img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.8s ease; }
+.gallery img.active { opacity: 1; }
+</style>
+</head>
+<body>
+<div class="spacer">scroll</div>
+<div class="cards-scroll-zone" id="cards-zone">
+  <div class="cards-sticky">
+    <div class="card-slot" data-index="0">
+      <div class="card-left">
+        <span class="reveal-line"><span class="card-label">Future is</span></span>
+        <h2 class="card-title"><span class="reveal-line"><span>Storytelling</span></span></h2>
+        <div class="progress-dots"></div>
+        <p class="card-text"><span class="reveal-line"><span>3D modeling, georeferencing and scrollytelling to tell the story of Bogota's first metro from the inside. Publication: October 2026.</span></span></p>
+      </div>
+      <div class="card-right">
+        <div class="card-media">
+          <video src="https://mariofdor-web.github.io/portfolio-assets/metro_recorte.mp4" autoplay muted loop playsinline></video>
+        </div>
+      </div>
+    </div>
+    <div class="card-slot" data-index="1">
+      <div class="card-left">
+        <span class="reveal-line"><span class="card-label">Future is</span></span>
+        <h2 class="card-title"><span class="reveal-line"><span>Information</span></span></h2>
+        <div class="progress-dots"></div>
+        <p class="card-text"><span class="reveal-line"><span>Decades of historical data, illustrations and animations to explain Bogota's water crisis without a single technical figure. Premio Alvaro Gomez Hurtado 2025.</span></span></p>
+      </div>
+      <div class="card-right">
+        <div class="card-media">
+          <video src="https://mariofdor-web.github.io/portfolio-assets/Premio_diseno_ElEspectador_final_freeze.mp4" autoplay muted loop playsinline></video>
+        </div>
+      </div>
+    </div>
+    <div class="card-slot text-only" data-index="2">
+      <div class="card-left">
+        <span class="reveal-line"><span class="card-label">Future is</span></span>
+        <h2 class="card-title"><span class="reveal-line"><span>Innovation</span></span></h2>
+        <div class="progress-dots"></div>
+        <p class="card-text"><span class="reveal-line"><span>AI arrived in journalism and it must be used without compromising the truth. Since January 2026 I have led the construction of El Espectador's AI governance framework — more than 200 people involved. I also built a chatbot in Microsoft Teams connected to live-updated documents. Delivery: October 2026.</span></span></p>
+      </div>
+    </div>
+    <div class="card-slot" data-index="3">
+      <div class="card-left">
+        <span class="reveal-line"><span class="card-label">Future is</span></span>
+        <h2 class="card-title"><span class="reveal-line"><span>Visual</span></span></h2>
+        <div class="progress-dots"></div>
+        <p class="card-text"><span class="reveal-line"><span>Brazil 2014 World Cup. My first project as director: double-page infographics that together formed a single giant piece. CLAP Platinum Iberoamerica.</span></span></p>
+      </div>
+      <div class="card-right">
+        <div class="card-media">
+          <video src="https://mariofdor-web.github.io/portfolio-assets/reel-1-recortado.mp4" autoplay muted loop playsinline></video>
+        </div>
+      </div>
+    </div>
+    <div class="card-slot" data-index="4">
+      <div class="card-left">
+        <span class="reveal-line"><span class="card-label">Future is</span></span>
+        <h2 class="card-title"><span class="reveal-line"><span>Experimentation</span></span></h2>
+        <div class="progress-dots"></div>
+        <p class="card-text"><span class="reveal-line"><span>Illustration and craft as a design language. Each piece pushing the visual limit of what editorial design can be.</span></span></p>
+      </div>
+      <div class="card-right">
+        <div class="gallery" id="gallery">
+          <img src="https://mariofdor-web.github.io/portfolio-assets/presentacion-diseno-Mario-20251.jpeg" class="active">
+          <img src="https://mariofdor-web.github.io/portfolio-assets/presentacion-diseno-Mario-20252.jpeg">
+          <img src="https://mariofdor-web.github.io/portfolio-assets/presentacion-diseno-Mario-20253.jpeg">
+          <img src="https://mariofdor-web.github.io/portfolio-assets/presentacion-diseno-Mario-20254.jpeg">
+          <img src="https://mariofdor-web.github.io/portfolio-assets/presentacion-diseno-Mario-20255.jpeg">
+        </div>
+      </div>
+    </div>
+    <div class="card-slot" data-index="5">
+      <div class="card-left">
+        <span class="reveal-line"><span class="card-label">Future is</span></span>
+        <h2 class="card-title"><span class="reveal-line"><span>Humanity</span></span></h2>
+        <div class="progress-dots"></div>
+        <p class="card-text"><span class="reveal-line"><span>The earthquake hit on August 10. Within hours, I designed and connected a page for users to report missing relatives — public forms connected to a real-time database. One week later, that same data became a report on the victims.</span></span></p>
+      </div>
+      <div class="card-right">
+        <div class="card-media">
+          <video src="https://mariofdor-web.github.io/portfolio-assets/fallecidos-recortado.mp4" autoplay muted loop playsinline></video>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="spacer">↓</div>
+<script>
+const zone = document.getElementById('cards-zone');
+const slots = document.querySelectorAll('.card-slot');
+const total = slots.length;
+let current = -1;
+slots.forEach((slot, slotIndex) => {
+  const dotsEl = slot.querySelector('.progress-dots');
+  for (let i = 0; i < total; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === slotIndex ? ' active' : '');
+    dotsEl.appendChild(d);
+  }
+});
+function setSlot(index) {
+  if (index === current) return;
+  slots.forEach((s, i) => {
+    s.classList.toggle('active', i === index);
+    const dots = s.querySelectorAll('.dot');
+    dots.forEach((d, di) => d.classList.toggle('active', di === index));
+  });
+  current = index;
+}
+function update() {
+  const rect = zone.getBoundingClientRect();
+  const zoneH = zone.offsetHeight - window.innerHeight;
+  const scrolled = -rect.top;
+  if (scrolled < 0 || scrolled > zoneH + window.innerHeight) return;
+  const p = Math.max(0, Math.min(1, scrolled / zoneH));
+  setSlot(Math.min(Math.floor(p * total), total - 1));
+}
+window.addEventListener('scroll', update, { passive: true });
+update();
+const galleryImgs = document.querySelectorAll('#gallery img');
+let galleryIndex = 0;
+setInterval(() => {
+  galleryImgs[galleryIndex].classList.remove('active');
+  galleryIndex = (galleryIndex + 1) % galleryImgs.length;
+  galleryImgs[galleryIndex].classList.add('active');
+}, 2500);
+</script>
+</body>
+</html>
