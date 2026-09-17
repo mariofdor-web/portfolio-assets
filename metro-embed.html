@@ -41,8 +41,8 @@ body { overflow-x: hidden; }
 <body>
 
 <script>
+document.addEventListener('DOMContentLoaded', function() {
 
-    
   const container = document.getElementById('vagon-canvas-container');
   const debugEl = document.getElementById('debug');
   if (!container) throw new Error('Container no encontrado');
@@ -959,6 +959,7 @@ body { overflow-x: hidden; }
   }
   animate();
 
+}); // DOMContentLoaded
 </script>
 </body>
 </html>
