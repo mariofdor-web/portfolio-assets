@@ -39,7 +39,9 @@ body { overflow-x: hidden; }
 
 
 
-/* CARDS */
+.innovation-card { background: #f5a623 !important; }
+.innovation-text { font-size: clamp(1rem, 1.4vw, 1.25rem); line-height: 1.7; color: #1a3a2a; }
+.innovation-text strong { font-weight: 700; }
 .cards-scroll-zone { position: relative; height: 420vh; }
 .cards-sticky { position: sticky; top: 0; height: 100vh; background: #0d1f1a; overflow: hidden; }
 .card-slot { position: absolute; inset: 0; display: flex; align-items: center; padding: 0 24px; gap: 40px; pointer-events: none; visibility: hidden; }
@@ -68,22 +70,9 @@ body { overflow-x: hidden; }
 .gallery { position: relative; width: 100%; aspect-ratio: 16/10; border-radius: 3px; overflow: hidden; background: #1a2e24; }
 .gallery img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.8s ease; }
 .gallery img.active { opacity: 1; }
-
-
-.card-btn {
-  display: inline-block;
-  margin-top: 24px;
-  padding: 10px 22px;
-  border: 1px solid #4a8a6a;
-  color: #4a8a6a;
-  font-family: 'Open Sans', sans-serif;
-  font-size: 11px;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  text-decoration: none;
-  transition: background 0.3s, color 0.3s;
-}
+.card-btn { display: inline-block; margin-top: 24px; padding: 10px 22px; border: 1px solid #4a8a6a; color: #4a8a6a; font-family: 'Open Sans', sans-serif; font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; text-decoration: none; transition: background 0.3s, color 0.3s; }
 .card-btn:hover { background: #4a8a6a; color: #0d1f1a; }
+
 </style>
 </head>
 <body>
@@ -127,7 +116,7 @@ body { overflow-x: hidden; }
         <h2 class="card-title"><span class="reveal-line"><span>Visual</span></span></h2>
         <div class="progress-dots"></div>
         <p class="card-text"><span class="reveal-line"><span>Brazil 2014 World Cup. My first project as director: double-page infographics that together formed a single giant piece. CLAP Platinum Iberoamerica.</span></span></p>
-        <span class="reveal-line"><a href="https://www.youtube.com/watch?v=Uu0q97Wz990" target="_blank" class="card-btn">Watch project →</a></span>
+        <span class="reveal-line"><a href="https://www.youtube.com/watch?v=Uu0q97Wz990" target="_blank" class="card-btn">Watch project</a></span>
       </div>
       <div class="card-right">
         <div class="card-media">
@@ -151,7 +140,7 @@ body { overflow-x: hidden; }
         <h2 class="card-title"><span class="reveal-line"><span>Information</span></span></h2>
         <div class="progress-dots"></div>
         <p class="card-text"><span class="reveal-line"><span>Decades of historical data, illustrations and animations to explain Bogota's water crisis without a single technical figure. Premio Alvaro Gomez Hurtado 2025.</span></span></p>
-        <span class="reveal-line"><a href="https://www.elespectador.com/bogota/escasez-de-agua-en-bogota-como-llegamos-a-este-punto/" target="_blank" class="card-btn">Read project →</a></span>
+        <span class="reveal-line"><a href="https://www.elespectador.com/bogota/escasez-de-agua-en-bogota-como-llegamos-a-este-punto/" target="_blank" class="card-btn">Read project</a></span>
       </div>
       <div class="card-right">
         <div class="card-media">
@@ -182,7 +171,7 @@ body { overflow-x: hidden; }
         <h2 class="card-title"><span class="reveal-line"><span>Humanity</span></span></h2>
         <div class="progress-dots"></div>
         <p class="card-text"><span class="reveal-line"><span>The earthquake hit on August 10. Within hours, I designed and connected a page for users to report missing relatives — public forms connected to a real-time database. One week later, that same data became a report on the victims.</span></span></p>
-        <span class="reveal-line"><a href="https://www.elespectador.com/colombia/victimas-del-terremoto-las-vidas-que-perdio-colombia/" target="_blank" class="card-btn">Read project →</a></span>
+        <span class="reveal-line"><a href="https://www.elespectador.com/colombia/victimas-del-terremoto-las-vidas-que-perdio-colombia/" target="_blank" class="card-btn">Read project</a></span>
       </div>
       <div class="card-right">
         <div class="card-media">
@@ -874,10 +863,7 @@ body { overflow-x: hidden; }
   const scrollState = { progress: 0 };
 
   const loader = new THREE.GLTFLoader();
-  const dracoLoader = new THREE.DRACOLoader();
-  dracoLoader.setDecoderPath('https://unpkg.com/three@0.128.0/examples/js/libs/draco/');
-  loader.setDRACOLoader(dracoLoader);
-  loader.load('https://cdn.jsdelivr.net/gh/mariofdor-web/portfolio-assets@main/vagon_metro_bogota_opt.glb', (gltf) => {
+  loader.load('https://cdn.jsdelivr.net/gh/mariofdor-web/portfolio-assets@main/vagon_metro_bogota.glb', (gltf) => {
     vagon = gltf.scene;
 
     vagon.traverse((child) => {
@@ -1119,7 +1105,6 @@ body { overflow-x: hidden; }
   animate();
 
 </script>
-
 <script>
 const zone = document.getElementById('cards-zone');
 const slots = document.querySelectorAll('.card-slot');
@@ -1127,6 +1112,7 @@ const total = slots.length;
 let current = -1;
 slots.forEach((slot, slotIndex) => {
   const dotsEl = slot.querySelector('.progress-dots');
+  if (!dotsEl) return;
   for (let i = 0; i < total; i++) {
     const d = document.createElement('div');
     d.className = 'dot' + (i === slotIndex ? ' active' : '');
@@ -1160,38 +1146,5 @@ setInterval(() => {
   galleryImgs[galleryIndex].classList.add('active');
 }, 2500);
 </script>
-
 </body>
-</html    <!-- 2. Visual -->
-    <div class="card-slot" data-index="1">
-      <div class="card-left">
-        <span class="reveal-line"><span class="card-label">Future is</span></span>
-        <h2 class="card-title"><span class="reveal-line"><span>Visual</span></span></h2>
-        <div class="progress-dots"></div>
-        <p class="card-text"><span class="reveal-line"><span>Brazil 2014 World Cup. My first project as director: double-page infographics that together formed a single giant piece. CLAP Platinum Iberoamerica.</span></span></p>
-        <span class="reveal-line"><a href="https://www.youtube.com/watch?v=Uu0q97Wz990" target="_blank" class="card-btn">Watch project →</a></span>
-      </div>
-      <div class="card-right">
-        <div class="card-media">
-          <video src="https://mariofdor-web.github.io/portfolio-assets/reel-1-recortado.mp4" autoplay muted loop playsinline></video>
-        </div>
-      </div>
-    </div>
-
-    <!-- 4. Information -->
-    <div class="card-slot" data-index="3">
-      <div class="card-left">
-        <span class="reveal-line"><span class="card-label">Future is</span></span>
-        <h2 class="card-title"><span class="reveal-line"><span>Information</span></span></h2>
-        <div class="progress-dots"></div>
-        <p class="card-text"><span class="reveal-line"><span>Decades of historical data, illustrations and animations to explain Bogota's water crisis without a single technical figure. Premio Alvaro Gomez Hurtado 2025.</span></span></p>
-        <span class="reveal-line"><a href="https://www.elespectador.com/bogota/escasez-de-agua-en-bogota-como-llegamos-a-este-punto/" target="_blank" class="card-btn">Read project →</a></span>
-      </div>
-      <div class="card-right">
-        <div class="card-media">
-          <video src="https://mariofdor-web.github.io/portfolio-assets/Premio_diseno_ElEspectador_final_freeze.mp4" autoplay muted loop playsinline></video>
-        </div>
-      </div>
-    </div>
-
->
+</html>
