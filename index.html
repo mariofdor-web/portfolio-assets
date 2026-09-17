@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mario Rodriguez — Portfolio</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
 <style>
 
@@ -38,7 +37,6 @@ body { overflow-x: hidden; }
 
 
 
-
 .innovation-card { background: #f5a623 !important; }
 .innovation-text { font-size: clamp(1rem, 1.4vw, 1.25rem); line-height: 1.7; color: #1a3a2a; }
 .innovation-text strong { font-weight: 700; }
@@ -46,7 +44,6 @@ body { overflow-x: hidden; }
 .cards-sticky { position: sticky; top: 0; height: 100vh; background: #0d1f1a; overflow: hidden; }
 .card-slot { position: absolute; inset: 0; display: flex; align-items: center; padding: 0 24px; gap: 40px; pointer-events: none; visibility: hidden; }
 .card-slot.active { pointer-events: auto; visibility: visible; }
-.card-slot.text-only .card-left { flex: 0 0 50%; }
 .card-left { flex: 0 0 36%; }
 .card-right { flex: 1; }
 .reveal-line { display: block; overflow: hidden; }
@@ -56,23 +53,21 @@ body { overflow-x: hidden; }
 .card-slot.active .reveal-line:nth-child(3) span { transition-delay: 0.14s; transform: translateX(0); }
 .card-slot.active .reveal-line:nth-child(4) span { transition-delay: 0.21s; transform: translateX(0); }
 .card-slot.active .reveal-line:nth-child(5) span { transition-delay: 0.28s; transform: translateX(0); }
-.card-slot.active .reveal-line:nth-child(6) span { transition-delay: 0.35s; transform: translateX(0); }
 .card-right { opacity: 0; transform: translateX(30px); transition: opacity 0.7s ease 0.25s, transform 0.7s cubic-bezier(0.16,1,0.3,1) 0.25s; }
 .card-slot.active .card-right { opacity: 1; transform: translateX(0); }
-.progress-dots { display: flex; flex-direction: row; gap: 8px; margin-bottom: 24px; }
+.progress-dots { display: flex; gap: 8px; margin-bottom: 24px; }
 .dot { width: 5px; height: 5px; border-radius: 50%; background: #2a4a3a; transition: background 0.3s, transform 0.3s; }
 .dot.active { background: #4a8a6a; transform: scale(1.6); }
-.card-label { font-family: 'Open Sans', sans-serif; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: #4a8a6a; margin-bottom: 16px; }
-.card-title { font-family: 'Open Sans', sans-serif; font-size: clamp(2.8rem, 5vw, 5rem); font-weight: 700; color: #dde8e2; margin-bottom: 24px; line-height: 1.05; }
-.card-text { font-family: 'Open Sans', sans-serif; font-size: clamp(0.85rem, 1.1vw, 1rem); line-height: 1.8; color: #7a9a8a; }
-.card-media { width: 100%; aspect-ratio: 16/10; border-radius: 3px; overflow: hidden; background: #1a2e24; position: relative; }
+.card-label { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: #4a8a6a; margin-bottom: 16px; }
+.card-title { font-size: clamp(2.8rem, 5vw, 5rem); font-weight: 700; color: #dde8e2; margin-bottom: 24px; line-height: 1.05; }
+.card-text { font-size: clamp(0.85rem, 1.1vw, 1rem); line-height: 1.8; color: #7a9a8a; }
+.card-media { width: 100%; aspect-ratio: 16/10; border-radius: 3px; overflow: hidden; background: #1a2e24; }
 .card-media video, .card-media img { width: 100%; height: 100%; object-fit: cover; }
 .gallery { position: relative; width: 100%; aspect-ratio: 16/10; border-radius: 3px; overflow: hidden; background: #1a2e24; }
 .gallery img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.8s ease; }
 .gallery img.active { opacity: 1; }
-.card-btn { display: inline-block; margin-top: 24px; padding: 10px 22px; border: 1px solid #4a8a6a; color: #4a8a6a; font-family: 'Open Sans', sans-serif; font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; text-decoration: none; transition: background 0.3s, color 0.3s; }
+.card-btn { display: inline-block; margin-top: 24px; padding: 10px 22px; border: 1px solid #4a8a6a; color: #4a8a6a; font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; text-decoration: none; transition: background 0.3s, color 0.3s; }
 .card-btn:hover { background: #4a8a6a; color: #0d1f1a; }
-
 </style>
 </head>
 <body>
@@ -94,7 +89,6 @@ body { overflow-x: hidden; }
     <div id="debug" class="debug"></div>
   </div>
 </section>
-
 <div class="cards-scroll-zone" id="cards-zone">
   <div class="cards-sticky">
     <div class="card-slot" data-index="0">
@@ -104,13 +98,11 @@ body { overflow-x: hidden; }
         <div class="progress-dots"></div>
         <p class="card-text"><span class="reveal-line"><span>3D modeling, georeferencing and scrollytelling to tell the story of Bogota's first metro from the inside. Publication: October 2026.</span></span></p>
       </div>
-      <div class="card-right">
-        <div class="card-media">
-          <video src="https://mariofdor-web.github.io/portfolio-assets/metro_recorte.mp4" autoplay muted loop playsinline></video>
-        </div>
-      </div>
+      <div class="card-right"><div class="card-media">
+        <video src="https://mariofdor-web.github.io/portfolio-assets/metro_recorte.mp4" autoplay muted loop playsinline></video>
+      </div></div>
     </div>
-    <div class="card-slot"     <div class="card-slot" data-index="1">
+    <div class="card-slot" data-index="1">
       <div class="card-left">
         <span class="reveal-line"><span class="card-label">Future is</span></span>
         <h2 class="card-title"><span class="reveal-line"><span>Information</span></span></h2>
@@ -118,23 +110,21 @@ body { overflow-x: hidden; }
         <p class="card-text"><span class="reveal-line"><span>Decades of historical data, illustrations and animations to explain Bogota's water crisis without a single technical figure. Premio Alvaro Gomez Hurtado 2025.</span></span></p>
         <span class="reveal-line"><a href="https://www.elespectador.com/bogota/escasez-de-agua-en-bogota-como-llegamos-a-este-punto/" target="_blank" class="card-btn">Read project</a></span>
       </div>
-      <div class="card-right">
-        <div class="card-media">
-          <video src="https://mariofdor-web.github.io/portfolio-assets/reel1.mp4" autoplay muted loop playsinline></video>
-        </div>
-      </div>
+      <div class="card-right"><div class="card-media">
+        <video src="https://mariofdor-web.github.io/portfolio-assets/reel1.mp4" autoplay muted loop playsinline></video>
+      </div></div>
     </div>
-    data-index="2">
+    <div class="card-slot innovation-card" data-index="2">
       <div class="card-left">
         <span class="reveal-line"><span class="card-label" style="color:#1a3a2a;">Future is</span></span>
         <h2 class="card-title" style="color:#1a3a2a;"><span class="reveal-line"><span>Innovation</span></span></h2>
         <div class="progress-dots"></div>
       </div>
       <div class="card-right innovation-text">
-        <span class="reveal-line"><span><strong>AI arrived in journalism and it must be used without compromising the truth.</strong> Since January 2026 I have led the construction of El Espectador's AI governance framework — more than 200 people involved. As part of the deliverable, I built a chatbot in Microsoft Teams connected to live-updated documents. Linked to the Master's in Innovation I am completing this year. Delivery: October 2026.</span></span>
+        <span class="reveal-line"><span><strong>AI arrived in journalism and it must be used without compromising the truth.</strong> Since January 2026 I have led the construction of El Espectador's AI governance framework — more than 200 people involved. I built a chatbot in Microsoft Teams connected to live-updated documents. Linked to the Master's in Innovation I am completing this year. Delivery: October 2026.</span></span>
       </div>
     </div>
-    <div class="card-slot"     <div class="card-slot" data-index="3">
+    <div class="card-slot" data-index="3">
       <div class="card-left">
         <span class="reveal-line"><span class="card-label">Future is</span></span>
         <h2 class="card-title"><span class="reveal-line"><span>Visual</span></span></h2>
@@ -142,13 +132,11 @@ body { overflow-x: hidden; }
         <p class="card-text"><span class="reveal-line"><span>Brazil 2014 World Cup. My first project as director: double-page infographics that together formed a single giant piece. CLAP Platinum Iberoamerica.</span></span></p>
         <span class="reveal-line"><a href="https://www.youtube.com/watch?v=Uu0q97Wz990" target="_blank" class="card-btn">Watch project</a></span>
       </div>
-      <div class="card-right">
-        <div class="card-media">
-          <video src="https://mariofdor-web.github.io/portfolio-assets/premio.mp4" autoplay muted loop playsinline></video>
-        </div>
-      </div>
+      <div class="card-right"><div class="card-media">
+        <video src="https://mariofdor-web.github.io/portfolio-assets/premio.mp4" autoplay muted loop playsinline></video>
+      </div></div>
     </div>
-    data-index="4">
+    <div class="card-slot" data-index="4">
       <div class="card-left">
         <span class="reveal-line"><span class="card-label">Future is</span></span>
         <h2 class="card-title"><span class="reveal-line"><span>Experimentation</span></span></h2>
@@ -173,15 +161,12 @@ body { overflow-x: hidden; }
         <p class="card-text"><span class="reveal-line"><span>The earthquake hit on August 10. Within hours, I designed and connected a page for users to report missing relatives — public forms connected to a real-time database. One week later, that same data became a report on the victims.</span></span></p>
         <span class="reveal-line"><a href="https://www.elespectador.com/colombia/victimas-del-terremoto-las-vidas-que-perdio-colombia/" target="_blank" class="card-btn">Read project</a></span>
       </div>
-      <div class="card-right">
-        <div class="card-media">
-          <video src="https://mariofdor-web.github.io/portfolio-assets/fallecidos-recortado.mp4" autoplay muted loop playsinline></video>
-        </div>
-      </div>
+      <div class="card-right"><div class="card-media">
+        <video src="https://mariofdor-web.github.io/portfolio-assets/fallecidos-recortado.mp4" autoplay muted loop playsinline></video>
+      </div></div>
     </div>
   </div>
 </div>
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://unpkg.com/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script src="https://unpkg.com/three@0.128.0/examples/js/loaders/DRACOLoader.js"></script>
@@ -1110,41 +1095,35 @@ const zone = document.getElementById('cards-zone');
 const slots = document.querySelectorAll('.card-slot');
 const total = slots.length;
 let current = -1;
-slots.forEach((slot, slotIndex) => {
-  const dotsEl = slot.querySelector('.progress-dots');
-  if (!dotsEl) return;
-  for (let i = 0; i < total; i++) {
-    const d = document.createElement('div');
-    d.className = 'dot' + (i === slotIndex ? ' active' : '');
-    dotsEl.appendChild(d);
+slots.forEach((slot, i) => {
+  const d = slot.querySelector('.progress-dots');
+  if (!d) return;
+  for (let j = 0; j < total; j++) {
+    const dot = document.createElement('div');
+    dot.className = 'dot' + (j === i ? ' active' : '');
+    d.appendChild(dot);
   }
 });
-function setSlot(index) {
-  if (index === current) return;
-  slots.forEach((s, i) => {
-    s.classList.toggle('active', i === index);
-    const dots = s.querySelectorAll('.dot');
-    dots.forEach((d, di) => d.classList.toggle('active', di === index));
+function setSlot(i) {
+  if (i === current) return;
+  slots.forEach((s, j) => {
+    s.classList.toggle('active', j === i);
+    s.querySelectorAll('.dot').forEach((d, k) => d.classList.toggle('active', k === i));
   });
-  current = index;
+  current = i;
 }
-function updateCards() {
-  const rect = zone.getBoundingClientRect();
-  const zoneH = zone.offsetHeight - window.innerHeight;
-  const scrolled = -rect.top;
-  if (scrolled < 0 || scrolled > zoneH + window.innerHeight) return;
-  const p = Math.max(0, Math.min(1, scrolled / zoneH));
-  setSlot(Math.min(Math.floor(p * total), total - 1));
+function tick() {
+  const r = zone.getBoundingClientRect();
+  const h = zone.offsetHeight - window.innerHeight;
+  const s = -r.top;
+  if (s < 0 || s > h + window.innerHeight) return;
+  setSlot(Math.min(Math.floor(Math.max(0, Math.min(1, s/h)) * total), total - 1));
 }
-window.addEventListener('scroll', updateCards, { passive: true });
-updateCards();
-const galleryImgs = document.querySelectorAll('#gallery img');
-let galleryIndex = 0;
-setInterval(() => {
-  galleryImgs[galleryIndex].classList.remove('active');
-  galleryIndex = (galleryIndex + 1) % galleryImgs.length;
-  galleryImgs[galleryIndex].classList.add('active');
-}, 2500);
+window.addEventListener('scroll', tick, { passive: true });
+tick();
+const imgs = document.querySelectorAll('#gallery img');
+let gi = 0;
+setInterval(() => { imgs[gi].classList.remove('active'); gi = (gi+1)%imgs.length; imgs[gi].classList.add('active'); }, 2500);
 </script>
 </body>
 </html>
