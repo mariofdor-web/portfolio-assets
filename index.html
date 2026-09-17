@@ -175,6 +175,7 @@ body { overflow-x: hidden; }
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://unpkg.com/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://unpkg.com/three@0.128.0/examples/js/loaders/DRACOLoader.js"></script>
 <script>
 
     
@@ -853,7 +854,10 @@ body { overflow-x: hidden; }
   const scrollState = { progress: 0 };
 
   const loader = new THREE.GLTFLoader();
-  loader.load('https://cdn.jsdelivr.net/gh/mariofdor-web/portfolio-assets@main/vagon_metro_bogota.glb', (gltf) => {
+  const dracoLoader = new THREE.DRACOLoader();
+  dracoLoader.setDecoderPath('https://unpkg.com/three@0.128.0/examples/js/libs/draco/');
+  loader.setDRACOLoader(dracoLoader);
+  loader.load('https://cdn.jsdelivr.net/gh/mariofdor-web/portfolio-assets@main/vagon_metro_bogota_opt.glb', (gltf) => {
     vagon = gltf.scene;
 
     vagon.traverse((child) => {
