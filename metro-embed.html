@@ -87,17 +87,17 @@ body { overflow-x: hidden; }
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.outputEncoding = THREE.sRGBEncoding;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.4;
+  renderer.toneMappingExposure = 0.8;
   container.appendChild(renderer.domElement);
 
   // Ambient bajo (solo para que las sombras no queden negras)
-  scene.add(new THREE.AmbientLight(0xffffff, 0.25));
+  scene.add(new THREE.AmbientLight(0xffffff, 0.2));
   
   // Hemisphere: cielo cálido, piso azulado (da ambiente sutil)
   scene.add(new THREE.HemisphereLight(0xfff5e0, 0x8899aa, 0.6));
   
   // KEY LIGHT: luz principal fuerte con dirección clara (arriba-adelante-lateral)
-  const keyLight = new THREE.DirectionalLight(0xffffff, 2.2);
+  const keyLight = new THREE.DirectionalLight(0xffffff, 1.6);
   keyLight.position.set(20, 40, 15);
   scene.add(keyLight);
   
