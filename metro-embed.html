@@ -39,7 +39,7 @@ body { overflow-x: hidden; }
 <body>
 <section id="vagon-hero" class="vagon-hero">
   <div class="sticky-wrapper">
-    <video id="dron-video" src="/video/dron_metro.mp4" muted playsinline preload="auto"></video>
+    <video id="dron-video" src="https://cdn.jsdelivr.net/gh/mariofdor-web/portfolio-assets@main/dron_metro.mp4" muted playsinline preload="auto"></video>
     <div id="vagon-canvas-container" class="canvas-container"></div>
     <div class="beats-overlay">
       <div class="beat" data-beat="1">
@@ -56,7 +56,7 @@ body { overflow-x: hidden; }
   </div>
 </section>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://unpkg.com/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script>
 
     
@@ -734,7 +734,7 @@ body { overflow-x: hidden; }
   let vagonInicialPos = new THREE.Vector3();
   const scrollState = { progress: 0 };
 
-  const loader = new GLTFLoader();
+  const loader = new THREE.GLTFLoader();
   loader.load('https://cdn.jsdelivr.net/gh/mariofdor-web/portfolio-assets@main/vagon_metro_bogota.glb', (gltf) => {
     vagon = gltf.scene;
 
