@@ -108,6 +108,22 @@ body { overflow-x: hidden; }
   font-weight: 700;
 }
 
+
+@media (max-width: 768px) {
+  .card-slot {
+    flex-direction: column;
+    padding: 0 16px;
+    gap: 24px;
+    justify-content: center;
+  }
+  .card-left, .card-right { flex: none; width: 100%; }
+  .card-title { font-size: clamp(2rem, 8vw, 3rem); }
+  .card-text { font-size: 0.95rem; }
+  .cierre { flex-direction: column; padding: 60px 16px; gap: 40px; text-align: center; }
+  .cierre-img { flex: none; max-width: 280px; }
+  .cierre-titulo { font-size: clamp(2rem, 8vw, 3rem); }
+}
+
 </style>
 </head>
 <body>
