@@ -69,6 +69,45 @@ body { overflow-x: hidden; }
 .gallery img.active { opacity: 1; }
 .card-btn { display: inline-block; margin-top: 24px; padding: 10px 22px; border: 1px solid #4a8a6a; color: #4a8a6a; font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; text-decoration: none; transition: background 0.3s, color 0.3s; }
 .card-btn:hover { background: #4a8a6a; color: #0d1f1a; }
+
+.cierre {
+  min-height: 100vh;
+  background: #0d1f1a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6vw;
+  gap: 6vw;
+}
+.cierre-img {
+  flex: 0 0 40%;
+  max-width: 500px;
+}
+.cierre-img img {
+  width: 100%;
+  border-radius: 3px;
+}
+.cierre-text {
+  flex: 1;
+}
+.cierre-name {
+  font-family: 'Open Sans', sans-serif;
+  font-size: clamp(0.9rem, 1.2vw, 1rem);
+  color: #4a8a6a;
+  letter-spacing: 0.1em;
+  margin-bottom: 12px;
+}
+.cierre-titulo {
+  font-family: 'Open Sans', sans-serif;
+  font-size: clamp(2.5rem, 4vw, 4rem);
+  color: #dde8e2;
+  line-height: 1.1;
+  font-weight: 300;
+}
+.cierre-titulo strong {
+  font-weight: 700;
+}
+
 </style>
 </head>
 <body>
@@ -168,6 +207,17 @@ body { overflow-x: hidden; }
     </div>
   </div>
 </div>
+
+<section class="cierre">
+  <div class="cierre-img">
+    <img src="https://mariofdor-web.github.io/portfolio-assets/ilustracion-cierre.jpg" alt="Mario Fernando Rodriguez">
+  </div>
+  <div class="cierre-text">
+    <p class="cierre-name">Mario Fernando Rodríguez</p>
+    <h2 class="cierre-titulo">Creative <strong>Director</strong></h2>
+  </div>
+</section>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://unpkg.com/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script src="https://unpkg.com/three@0.128.0/examples/js/loaders/DRACOLoader.js"></script>
