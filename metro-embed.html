@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Metro de Bogotá</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { overflow-x: hidden; }
@@ -37,35 +39,10 @@ body { overflow-x: hidden; }
 </style>
 </head>
 <body>
----
-// VagonHero.astro v5 — dos vías con espacio, todo alineado, sin saltos
----
 
-<section id="vagon-hero" class="vagon-hero">
-  <div class="sticky-wrapper">
-    <video id="dron-video" src="/video/dron_metro.mp4" muted playsinline preload="auto"></video>
-    <div id="vagon-canvas-container" class="canvas-container"></div>
-    <div class="beats-overlay">
-      <div class="beat" data-beat="1">
-        <p class="beat-text">Este es el tren que atravesará Bogotá</p>
-      </div>
-      <div class="beat" data-beat="2">
-        <p class="beat-text">140 metros de largo. Siete vagones.</p>
-      </div>
-      <div class="beat" data-beat="3">
-        <p class="beat-text">1.778 personas caben en cada viaje.</p>
-      </div>
-    </div>
-    <div id="debug" class="debug"></div>
-  </div>
-</section>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script>
 
-  import * as THREE from 'three';
-  import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-
+    
   const container = document.getElementById('vagon-canvas-container');
   const debugEl = document.getElementById('debug');
   if (!container) throw new Error('Container no encontrado');
