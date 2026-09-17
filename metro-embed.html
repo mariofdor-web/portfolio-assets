@@ -961,6 +961,24 @@ body { overflow-x: hidden; }
   }
 
   window.addEventListener('scroll', onScroll, { passive: true });
+
+  // Comunicación con Webflow
+  window.addEventListener('message', (e) => {
+    if (e.data === 'activar') {
+      window.addEventListener('wheel', onWheel, { passive: false });
+    }
+  });
+
+  function onWheel(e) {
+    e.preventDefault();
+    window.scrollBy(0, e.deltaY);
+    const rect = document.getElementById('vagon-hero').getBoundingClientRect();
+    const totalScroll = document.getElementById('vagon-hero').offsetHeight - window.innerHeight;
+    const globalProgress = Math.max(0, Math.min(1, -rect.top / totalScroll));
+    if (globalProgress >= 0.999) {
+      window.parent.postMessage('metro-terminado', '*');
+    }
+  }
   onScroll();
 
   window.addEventListener('resize', () => {
