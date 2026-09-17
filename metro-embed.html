@@ -962,23 +962,34 @@ body { overflow-x: hidden; }
 
   window.addEventListener('scroll', onScroll, { passive: true });
 
-  // Comunicación con Webflow
+  // Recibir scroll desde Webflow
   window.addEventListener('message', (e) => {
-    if (e.data === 'activar') {
-      window.addEventListener('wheel', onWheel, { passive: false });
+    if (e.data && e.data.tipo === 'scroll') {
+      const p = e.data.progress;
+      const vid = document.getElementById('dron-video');
+      const canvas = document.getElementById('vagon-canvas-container');
+
+      if (p <= 0.30) {
+        if (vid && vid.duration) {
+          vid.style.display = 'block';
+          vid.currentTime = (p / 0.30) * vid.duration;
+        }
+        if (canvas) canvas.style.display = 'none';
+        scrollState.progress = 0;
+      } else {
+        if (vid) vid.style.display = 'none';
+        if (canvas) canvas.style.display = 'block';
+        if (p < 0.85) {
+          scrollState.progress = (p - 0.30) / 0.55;
+        } else {
+          scrollState.progress = 1;
+          const pEstacion = (p - 0.85) / 0.15;
+          animarEstacionPorScroll(pEstacion);
+        }
+        updateScene();
+      }
     }
   });
-
-  function onWheel(e) {
-    e.preventDefault();
-    window.scrollBy(0, e.deltaY);
-    const rect = document.getElementById('vagon-hero').getBoundingClientRect();
-    const totalScroll = document.getElementById('vagon-hero').offsetHeight - window.innerHeight;
-    const globalProgress = Math.max(0, Math.min(1, -rect.top / totalScroll));
-    if (globalProgress >= 0.999) {
-      window.parent.postMessage('metro-terminado', '*');
-    }
-  }
   onScroll();
 
   window.addEventListener('resize', () => {
