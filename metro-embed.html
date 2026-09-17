@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Metro de Bogotá</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { overflow-x: hidden; }
+
+  .vagon-hero { position: relative; width: 100%; height: 600vh; background: #e8e8e8; }
+  .sticky-wrapper { position: sticky; top: 0; width: 100%; height: 100vh; overflow: hidden; }
+  .canvas-container { position: absolute; inset: 0; width: 100%; height: 100%; display: none; }
+  #dron-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 2; }
+  .canvas-container canvas { display: block; width: 100%; height: 100%; }
+  .beats-overlay { position: absolute; inset: 0; pointer-events: none; z-index: 10; }
+  .beat { position: absolute; bottom: 12vh; left: 50%; transform: translateX(-50%); text-align: center; max-width: 720px; padding: 0 2rem; opacity: 0; transition: opacity 0.6s ease-out; }
+  .beat.active { opacity: 1; }
+  .beat-text { font-family: Georgia, serif; font-size: clamp(1.4rem, 3vw, 2.2rem); line-height: 1.3; color: #1a1a1a; font-weight: 400; letter-spacing: -0.01em; }
+  .debug { position: absolute; top: 20px; left: 20px; background: rgba(0,0,0,0.75); color: #0f0; padding: 8px 12px; font-family: monospace; font-size: 12px; z-index: 100; border-radius: 4px; pointer-events: none; }
+
+  .sticky-wrapper::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 5;
+    background: radial-gradient(
+      ellipse at center,
+      transparent 20%,
+      rgba(0, 0, 0, 0.15) 80%,
+      rgba(0, 0, 0, 0.35) 100%
+    );
+  }
+
+
+</style>
+</head>
+<body>
+---
+// VagonHero.astro v5 — dos vías con espacio, todo alineado, sin saltos
+---
+
+<section id="vagon-hero" class="vagon-hero">
+  <div class="sticky-wrapper">
+    <video id="dron-video" src="/video/dron_metro.mp4" muted playsinline preload="auto"></video>
+    <div id="vagon-canvas-container" class="canvas-container"></div>
+    <div class="beats-overlay">
+      <div class="beat" data-beat="1">
+        <p class="beat-text">Este es el tren que atravesará Bogotá</p>
+      </div>
+      <div class="beat" data-beat="2">
+        <p class="beat-text">140 metros de largo. Siete vagones.</p>
+      </div>
+      <div class="beat" data-beat="3">
+        <p class="beat-text">1.778 personas caben en cada viaje.</p>
+      </div>
+    </div>
+    <div id="debug" class="debug"></div>
+  </div>
+</section>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script>
+
+  import * as THREE from 'three';
+  import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+
+  const container = document.getElementById('vagon-canvas-container');
+  const debugEl = document.getElementById('debug');
+  if (!container) throw new Error('Container no encontrado');
+
+  const scene = new THREE.Scene();
+  // Fondo con gradiente vertical (cielo claro arriba, piso más oscuro abajo)
+  const bgCanvas = document.createElement('canvas');
+  bgCanvas.width = 2;
+  bgCanvas.height = 512;
+  const bgCtx = bgCanvas.getContext('2d');
+  const bgGrad = bgCtx.createLinearGradient(0, 0, 0, 512);
+  bgGrad.addColorStop(0, '#d8dce0');
+  bgGrad.addColorStop(0.5, '#c0c5cb');
+  bgGrad.addColorStop(1, '#8a9199');
+  bgCtx.fillStyle = bgGrad;
+  bgCtx.fillRect(0, 0, 2, 512);
+  const bgTexture = new THREE.CanvasTexture(bgCanvas);
+  scene.background = bgTexture;
+
+
+  const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 500);
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.1;
+  container.appendChild(renderer.domElement);
+
+  // Ambient bajo (solo para que las sombras no queden negras)
+  scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+  
+  // Hemisphere: cielo cálido, piso azulado (da ambiente sutil)
+  scene.add(new THREE.HemisphereLight(0xfff5e0, 0x8899aa, 0.5));
+  
+  // KEY LIGHT: luz principal fuerte con dirección clara (arriba-adelante-lateral)
+  const keyLight = new THREE.DirectionalLight(0xffffff, 1.8);
+  keyLight.position.set(20, 40, 15);
+  scene.add(keyLight);
+  
+  // FILL LIGHT: relleno suave desde el lado opuesto, tono frío (contrapunto)
+  const fillLight = new THREE.DirectionalLight(0xaaccff, 0.4);
+  fillLight.position.set(-15, 20, -10);
+  scene.add(fillLight);
+  
+  // RIM LIGHT: luz de contorno desde atrás (perfila el vagón contra el fondo)
+  const rimLight = new THREE.DirectionalLight(0xffffff, 0.6);
+  rimLight.position.set(0, 15, -30);
+  scene.add(rimLight);
+
+  // ============================================
+  // ESTACIÓN v5 — con espacio para dos vías
+  // Estructura Z:
+  //   -8: vidrio exterior izq (inclinado hacia afuera)
+  //   -5: andén izquierdo (ancho 4m)
+  //   -3: vidrio interior izq
+  //   -1.5: centro vía izquierda (VACÍA)
+  //    0: separación entre vías
+  //   +1.5: centro vía derecha (con VAGÓN)
+  //   +3: vidrio interior der
+  //   +5: andén derecho (ancho 4m)
+  //   +8: vidrio exterior der (inclinado hacia afuera)
+  // ============================================
+  const estacion = new THREE.Group();
+
+  const matBlanco = new THREE.MeshStandardMaterial({ color: 0xfafafa, roughness: 0.45, metalness: 0 });
+  const matGrisClaro = new THREE.MeshStandardMaterial({ color: 0xe8e8e8, roughness: 0.8, metalness: 0.05 });
+  const matVidrioAnden = new THREE.MeshPhysicalMaterial({
+    color: 0xccddee, roughness: 0.1, metalness: 0,
+    transparent: true, opacity: 0.25
+  });
+
+  // Columna central
+  const columna = new THREE.Mesh(
+    new THREE.CylinderGeometry(1.3, 1.5, 18, 32),
+    matGrisClaro
+  );
+  columna.position.set(0, -10, 0);
+  columna.position.y -= 50;
+  estacion.add(columna);
+
+
+  
+  // Losa base con forma inclinada (centro más grueso, bordes más delgados)
+  // Simula la sección estructural real del viaducto del Metro Bogotá
+  function crearLosaEstructural() {
+    // Perfil transversal: forma trapezoidal (más ancho arriba, se estrecha abajo en los bordes)
+    // Usamos ExtrudeGeometry con un shape que define el perfil
+    const shape = new THREE.Shape();
+    shape.moveTo(-8, 0);       // esquina superior izquierda
+    shape.lineTo(8, 0);        // esquina superior derecha
+    shape.lineTo(6, -1.5);     // baja e inclinada hacia adentro (borde derecho)
+    shape.lineTo(-6, -1.5);    // fondo inclinado (borde izquierdo)
+    shape.lineTo(-8, 0);       // cierre
+    
+    const extrudeSettings = {
+      depth: 32,               // largo total (era 32 en la losa vieja)
+      bevelEnabled: false
+    };
+    
+    const geom = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+    // Centrar en el eje X (el extrude va de 0 a 32, lo movemos a -16 a 16)
+    geom.translate(0, 0, -16);
+    // Rotar para que quede acostada (el extrude por defecto va en Z)
+    geom.rotateY(Math.PI / 2);
+    
+    const mesh = new THREE.Mesh(geom, matBlanco);
+    mesh.position.set(0, 0, 0);
+    return mesh;
+  }
+  
+  const parteLosa = crearLosaEstructural();
+  parteLosa.position.y -= 50;
+  estacion.add(parteLosa);
+
+  
+  // Capitel alargado sobre la columna con perfil CURVO
+  function crearCapitelAlargado() {
+    const shape = new THREE.Shape();
+    const anchoSuperior = 10;
+    const anchoInferior = 6.5;
+    const alto = 2.3;
+    
+    shape.moveTo(-anchoSuperior / 1.7, 0);          // arriba izq
+    shape.lineTo(anchoSuperior / 1.7, 0);           // arriba der (tope plano)
+    
+    // Curva del lado derecho: baja curvándose hacia adentro
+    shape.bezierCurveTo(
+      anchoSuperior / 1.7, -alto * 0.7,   // control 1: sigue horizontal un poco al bajar
+      anchoInferior / 2 + 0.5, -alto,     // control 2: se acerca al ancho inferior
+      anchoInferior / 2, -alto             // fin: esquina inferior derecha
+    );
+    
+    // Base inferior (línea recta)
+    shape.lineTo(-anchoInferior / 2, -alto);
+    
+    // Curva del lado izquierdo: sube curvándose hacia afuera (espejo de la derecha)
+    shape.bezierCurveTo(
+      -anchoInferior / 2 - 0.5, -alto,    // control 1
+      -anchoSuperior / 1.7, -alto * 0.7,  // control 2
+      -anchoSuperior / 1.7, 0              // fin: cierre arriba izq
+    );
+    
+    shape.closePath();
+    
+    const extrudeSettings = {
+      depth: 4,
+      bevelEnabled: false,
+      curveSegments: 20   // más segmentos = curvas más suaves
+    };
+    
+    const geom = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+    geom.translate(0, 0, -2);
+    geom.rotateY(Math.PI / 2);
+    
+    const mesh = new THREE.Mesh(geom, matGrisClaro);
+    mesh.position.set(0, -1, 0);
+    return mesh;
+  }
+  
+  const parteCapitel = crearCapitelAlargado();
+  parteCapitel.position.y -= 50;
+  estacion.add(parteCapitel);
+
+    // ============================================
+  // VIADUCTO — losa longitudinal donde van los rieles
+  // Solo se extiende hacia atrás del vagón (+X)
+  // ============================================
+  function crearViaducto() {
+    const grupo = new THREE.Group();
+    
+    const LARGO_VIADUCTO = 500;
+    const ANCHO_VIADUCTO = 8;
+    const ALTO_LOSA = 0.6;
+    
+    // Losa (centro en x = LARGO/2 para que arranque en 0 y vaya hasta LARGO)
+    const losa = new THREE.Mesh(
+      new THREE.BoxGeometry(LARGO_VIADUCTO, ALTO_LOSA, ANCHO_VIADUCTO),
+      matGrisClaro
+    );
+    losa.position.set(0, -0.3, -1.8);
+    grupo.add(losa);
+    
+    // Parapetos
+    const parapetoAlto = 0.4;
+    for (let signo of [-1, 1]) {
+      const parapeto = new THREE.Mesh(
+        new THREE.BoxGeometry(LARGO_VIADUCTO, parapetoAlto, 0.2),
+        matBlanco
+      );
+      parapeto.position.set(0, parapetoAlto / 2 - 0.05, -1.8 + signo * (ANCHO_VIADUCTO / 2));
+      grupo.add(parapeto);
+    }
+    
+    // Rieles
+    const RADIO_RIEL = 0.08;
+    const rielesZ = [-3.5, -2.5, -1.1, -0.1];
+    
+    rielesZ.forEach(z => {
+      const riel = new THREE.Mesh(
+        new THREE.CylinderGeometry(RADIO_RIEL, RADIO_RIEL, LARGO_VIADUCTO, 8),
+        matGrisClaro
+      );
+      riel.rotation.z = Math.PI / 2;
+      riel.position.set(0, 0.05, z);
+      grupo.add(riel);
+    });
+    
+    return grupo;
+  }
+  
+  scene.add(crearViaducto());
+
+  // ============================================
+  // EDIFICIOS LATERALES DE ACCESO + PASARELAS
+  // Izquierda (-Z): 1 edificio grande
+  // Derecha (+Z): 2 edificios pequeños separados
+  // ============================================
+  function crearEdificioEstructural(largo, ancho, alto, numPisos, posX, posZ) {
+    const grupo = new THREE.Group();
+    
+    // Columnas
+    const numColumnasX = Math.ceil(largo / 6) + 1;
+    const numColumnasZ = Math.ceil(ancho / 6) + 1;
+    const radioCol = 0.25;
+    
+    for (let i = 0; i < numColumnasX; i++) {
+      for (let j = 0; j < numColumnasZ; j++) {
+        const x = -largo/2 + (largo / (numColumnasX - 1)) * i;
+        const z = -ancho/2 + (ancho / (numColumnasZ - 1)) * j;
+        
+        const columna = new THREE.Mesh(
+          new THREE.CylinderGeometry(radioCol, radioCol, alto, 12),
+          matGrisClaro
+        );
+        columna.position.set(x, alto / 2, z);
+        grupo.add(columna);
+      }
+    }
+    
+    // Losas de piso
+    const grosorLosa = 0.25;
+    for (let piso = 0; piso <= numPisos; piso++) {
+      const y = (alto / numPisos) * piso;
+      const losa = new THREE.Mesh(
+        new THREE.BoxGeometry(largo, grosorLosa, ancho),
+        matBlanco
+      );
+      losa.position.set(0, y, 0);
+      grupo.add(losa);
+    }
+    
+    // Techo superior
+    const techo = new THREE.Mesh(
+      new THREE.BoxGeometry(largo + 0.5, 0.4, ancho + 0.5),
+      matBlanco
+    );
+    techo.position.set(0, alto + 0.2, 0);
+    grupo.add(techo);
+    
+    // MUROS EXTERIORES (para que se vea terminado, no esqueleto)
+    // Muros frontales (los dos lados largos)
+    const grosorMuro = 0.15;
+    
+    // Muro frente (lado +Z del edificio)
+    const muroFrente = new THREE.Mesh(
+      new THREE.BoxGeometry(largo, alto, grosorMuro),
+      matVidrioAnden  // vidrio para que se vea moderno y transparente
+    );
+    muroFrente.position.set(0, alto / 2, ancho / 2 - grosorMuro / 2);
+    grupo.add(muroFrente);
+    
+    // Muro atrás (lado -Z del edificio)
+    const muroAtras = new THREE.Mesh(
+      new THREE.BoxGeometry(largo, alto, grosorMuro),
+      matBlanco  // sólido blanco
+    );
+    muroAtras.position.set(0, alto / 2, -ancho / 2 + grosorMuro / 2);
+    grupo.add(muroAtras);
+    
+    // Muros laterales (los dos lados cortos)
+    const muroIzq = new THREE.Mesh(
+      new THREE.BoxGeometry(grosorMuro, alto, ancho),
+      matBlanco
+    );
+    muroIzq.position.set(-largo / 2 + grosorMuro / 2, alto / 2, 0);
+    grupo.add(muroIzq);
+    
+    const muroDer = new THREE.Mesh(
+      new THREE.BoxGeometry(grosorMuro, alto, ancho),
+      matBlanco
+    );
+    muroDer.position.set(largo / 2 - grosorMuro / 2, alto / 2, 0);
+    grupo.add(muroDer);
+    
+    // Posicionar en el mundo
+    grupo.position.set(posX, -8, posZ);
+    return grupo;
+  }
+  
+  // Función para pasarela
+  function crearPasarela(largoConexion, altoPasarela, posX, posZinicio, posZfin) {
+    const grupo = new THREE.Group();
+    const anchoPasarela = 3;
+    
+    // Piso
+    const piso = new THREE.Mesh(
+      new THREE.BoxGeometry(anchoPasarela, 0.2, largoConexion),
+      matBlanco
+    );
+    grupo.add(piso);
+    
+    // Techo
+    const techoPas = new THREE.Mesh(
+      new THREE.BoxGeometry(anchoPasarela + 0.4, 0.15, largoConexion),
+      matBlanco
+    );
+    techoPas.position.set(0, 2.5, 0);
+    grupo.add(techoPas);
+    
+    // Columnas laterales
+    for (let i = -largoConexion/2; i <= largoConexion/2; i += 3) {
+      for (let signo of [-1, 1]) {
+        const col = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.08, 0.08, 2.5, 8),
+          matGrisClaro
+        );
+        col.position.set(signo * (anchoPasarela/2), 1.25, i);
+        grupo.add(col);
+      }
+    }
+    
+    // Barandas de vidrio
+    for (let signo of [-1, 1]) {
+      const baranda = new THREE.Mesh(
+        new THREE.BoxGeometry(0.04, 1.2, largoConexion),
+        matVidrioAnden
+      );
+      baranda.position.set(signo * (anchoPasarela/2), 0.7, 0);
+      grupo.add(baranda);
+    }
+    
+    grupo.position.set(posX, altoPasarela, (posZinicio + posZfin) / 2);
+    return grupo;
+  }
+  
+  // ============================================
+  // EDIFICIOS LATERALES CORTADOS (tipo sección arquitectónica)
+  // Cara hacia el andén: SIN pared (abierta, corte visible)
+  // Caras exteriores: VIDRIO (translúcido)
+  // ============================================
+  function crearEdificioCortado(largo, ancho, alto, numPisos, posX, posZ, ladoAbiertoZ) {
+    // ladoAbiertoZ: 'front' (+Z abierto) o 'back' (-Z abierto)
+    // El lado abierto es el que da hacia el andén (el corte)
+    const grupo = new THREE.Group();
+    
+    // Columnas
+    const numColumnasX = Math.ceil(largo / 6) + 1;
+    const numColumnasZ = Math.ceil(ancho / 6) + 1;
+    const radioCol = 0.3;
+    
+    for (let i = 0; i < numColumnasX; i++) {
+      for (let j = 0; j < numColumnasZ; j++) {
+        const x = -largo/2 + (largo / (numColumnasX - 1)) * i;
+        const z = -ancho/2 + (ancho / (numColumnasZ - 1)) * j;
+        
+        const columna = new THREE.Mesh(
+          new THREE.CylinderGeometry(radioCol, radioCol, alto, 12),
+          matGrisClaro
+        );
+        columna.position.set(x, alto / 2, z);
+        grupo.add(columna);
+      }
+    }
+    
+    // Losas de piso (con corte hacia el lado abierto)
+    const grosorLosa = 0.3;
+    for (let piso = 0; piso <= numPisos; piso++) {
+      const y = (alto / numPisos) * piso;
+      const losa = new THREE.Mesh(
+        new THREE.BoxGeometry(largo, grosorLosa, ancho),
+        matBlanco
+      );
+      losa.position.set(0, y, 0);
+      grupo.add(losa);
+    }
+    
+    // Techo superior (más ancho, remate arquitectónico)
+    const techo = new THREE.Mesh(
+      new THREE.BoxGeometry(largo + 0.8, 0.5, ancho + 0.8),
+      matBlanco
+    );
+    techo.position.set(0, alto + 0.25, 0);
+    grupo.add(techo);
+    
+    // MUROS EXTERIORES DE VIDRIO
+    // Todos los muros excepto el que da al lado abierto (corte)
+    const grosorMuro = 0.15;
+    
+    // Muro atrás (lado opuesto al corte)
+    if (ladoAbiertoZ === 'front') {
+      // Corte da a +Z → muro sólido va en -Z
+      const muroAtras = new THREE.Mesh(
+        new THREE.BoxGeometry(largo, alto, grosorMuro),
+        matVidrioAnden
+      );
+      muroAtras.position.set(0, alto / 2, -ancho / 2 + grosorMuro / 2);
+      grupo.add(muroAtras);
+    } else {
+      // Corte da a -Z → muro sólido va en +Z
+      const muroFrente = new THREE.Mesh(
+        new THREE.BoxGeometry(largo, alto, grosorMuro),
+        matVidrioAnden
+      );
+      muroFrente.position.set(0, alto / 2, ancho / 2 - grosorMuro / 2);
+      grupo.add(muroFrente);
+    }
+    
+    // Muros laterales (los dos lados cortos, siempre)
+    const muroIzq = new THREE.Mesh(
+      new THREE.BoxGeometry(grosorMuro, alto, ancho),
+      matVidrioAnden
+    );
+    muroIzq.position.set(-largo / 2 + grosorMuro / 2, alto / 2, 0);
+    grupo.add(muroIzq);
+    
+    const muroDer = new THREE.Mesh(
+      new THREE.BoxGeometry(grosorMuro, alto, ancho),
+      matVidrioAnden
+    );
+    muroDer.position.set(largo / 2 - grosorMuro / 2, alto / 2, 0);
+    grupo.add(muroDer);
+    
+    // NO se agrega muro en el lado abierto (queda el corte visible)
+    
+    // Posicionar en el mundo (base al nivel del suelo urbano)
+    grupo.position.set(posX, -13, posZ);
+    return grupo;
+  }
+  
+  // ============================================
+  // PASARELA (conecta edificio con andén central)
+  // ============================================
+  function crearPasarelaCorregida(largoConexion, alturaAnden, posX, direccionZ) {
+    // direccionZ: 1 (hacia +Z) o -1 (hacia -Z) según hacia dónde va la pasarela
+    const grupo = new THREE.Group();
+    const anchoPasarela = 3;
+    
+    // Piso
+    const piso = new THREE.Mesh(
+      new THREE.BoxGeometry(anchoPasarela, 0.25, largoConexion),
+      matBlanco
+    );
+    grupo.add(piso);
+    
+    // Techo
+    const techoPas = new THREE.Mesh(
+      new THREE.BoxGeometry(anchoPasarela + 0.4, 0.15, largoConexion),
+      matBlanco
+    );
+    techoPas.position.set(0, 2.5, 0);
+    grupo.add(techoPas);
+    
+    // Columnas laterales
+    for (let i = -largoConexion/2; i <= largoConexion/2; i += 3) {
+      for (let signo of [-1, 1]) {
+        const col = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.1, 0.1, 2.5, 8),
+          matGrisClaro
+        );
+        col.position.set(signo * (anchoPasarela/2), 1.25, i);
+        grupo.add(col);
+      }
+    }
+    
+    // Barandas de vidrio
+    for (let signo of [-1, 1]) {
+      const baranda = new THREE.Mesh(
+        new THREE.BoxGeometry(0.06, 1.3, largoConexion),
+        matVidrioAnden
+      );
+      baranda.position.set(signo * (anchoPasarela/2), 0.7, 0);
+      grupo.add(baranda);
+    }
+    
+    // La pasarela se posiciona a la altura del andén, en X del edificio,
+    // y con centro en el medio del largo de conexión
+    grupo.position.set(posX, alturaAnden, direccionZ * (largoConexion / 2 + 5));
+    return grupo;
+  }
+  
+
+
+
+
+  // Andén derecho
+  const andenDer = new THREE.Mesh(
+    new THREE.BoxGeometry(32, 0.6, 4),
+    matBlanco
+  );
+  andenDer.position.set(0, 0.55, 6);
+  andenDer.position.y -= 50;
+  estacion.add(andenDer);
+
+  // Vidrios interiores (verticales)
+  const grupoVidriosInt = new THREE.Group();
+  grupoVidriosInt.visible = false;
+  const vidriosInteriores = [-4, 4];
+  vidriosInteriores.forEach(z => {
+    const panel = new THREE.Mesh(
+      new THREE.BoxGeometry(32, 5.2, 0.08),
+      matVidrioAnden
+    );
+    panel.position.set(0, 3.5, z);
+    grupoVidriosInt.add(panel);
+    
+    // Marcos verticales
+    for (let x = -14; x <= 14; x += 4) {
+      const marco = new THREE.Mesh(
+        new THREE.BoxGeometry(0.15, 3.2, 0.15),
+        matBlanco
+      );
+      marco.position.set(x, 2.5, z);
+      grupoVidriosInt.add(marco);
+    }
+    
+    // Marco horizontal superior
+    const marcoHorizontalSup = new THREE.Mesh(
+      new THREE.BoxGeometry(32, 0.15, 0.15),
+      matBlanco
+    );
+    marcoHorizontalSup.position.set(0, 4.05, z);
+    grupoVidriosInt.add(marcoHorizontalSup);
+    
+    // Marco horizontal inferior
+    const marcoHorizontalInf = new THREE.Mesh(
+      new THREE.BoxGeometry(32, 0.15, 0.15),
+      matBlanco
+    );
+    marcoHorizontalInf.position.set(0, 0.95, z);
+    grupoVidriosInt.add(marcoHorizontalInf);
+  });
+  estacion.add(grupoVidriosInt);
+
+  // Vidrios exteriores (inclinados hacia afuera)
+  function crearVidrioExterior(ladoDerecho = true) {
+    const grupo = new THREE.Group();
+    const signo = ladoDerecho ? 1 : -1;
+    const largo = 32;
+    const alto = 5.5;
+    
+    const panel = new THREE.Mesh(
+      new THREE.BoxGeometry(largo, alto, 0.08),
+      matVidrioAnden
+    );
+    panel.position.set(0, alto / 2 + 0.5, signo * 8);
+    panel.rotation.x = signo * 0.35;
+    grupo.add(panel);
+    
+    for (let x = -14; x <= 14; x += 4) {
+      const marco = new THREE.Mesh(
+        new THREE.BoxGeometry(0.15, alto + 0.2, 0.15),
+        matBlanco
+      );
+      marco.position.set(x, alto / 2 + 0.5, signo * 8);
+      marco.rotation.x = signo * 0.35;
+      grupo.add(marco);
+    }
+    
+    return grupo;
+  }
+
+  const parteVidrio1 = crearVidrioExterior(true);
+  const parteVidrio2 = crearVidrioExterior(false);
+  parteVidrio1.position.y = 50;
+  parteVidrio2.position.y = 50;
+  estacion.add(parteVidrio1);
+  estacion.add(parteVidrio2);
+
+  // Techo membrana convexo hacia arriba
+  function crearTechoMembrana() {
+    const largo = 34;
+    const ancho = 20;
+    const alturaCurva = 3.5;
+    const segLargo = 30;
+    const segAncho = 30;
+    
+    const geom = new THREE.PlaneGeometry(largo, ancho, segLargo, segAncho);
+    const positions = geom.attributes.position;
+    
+    for (let i = 0; i < positions.count; i++) {
+      const y = positions.getY(i);
+      const norm = y / (ancho / 2);
+      const altura = alturaCurva * Math.cos(norm * Math.PI / 2);
+      positions.setZ(i, altura);
+    }
+    geom.computeVertexNormals();
+    
+    // Crear una copia del material con doble cara
+    const matTechoDobleCara = matBlanco.clone();
+    matTechoDobleCara.side = THREE.DoubleSide;
+    
+    const mesh = new THREE.Mesh(geom, matTechoDobleCara);
+    mesh.rotation.x = -Math.PI / 2;
+    mesh.position.y = 5.5;
+    mesh.position.z = 0;
+    return mesh;
+  }
+
+  const parteTecho = crearTechoMembrana();
+  parteTecho.position.y = 50;
+  estacion.add(parteTecho);
+
+  
+  // Costillas/vigas curvas del techo (transversales, siguen la curva del techo)
+  function crearCostillasTecho() {
+    const grupo = new THREE.Group();
+    const ancho = 20;
+    const alturaCurva = 3.5;
+    const alturaBase = 5.5;  // misma que el techo membrana
+    const segmentos = 20;    // suavidad de la curva
+    
+    // Crear una costilla curva usando TubeGeometry (sigue una curva bezier)
+    function crearCostilla(xPos) {
+      const puntos = [];
+      for (let i = 0; i <= segmentos; i++) {
+        const t = i / segmentos;
+        // z va de -ancho/2 a +ancho/2
+        const z = -ancho / 2 + t * ancho;
+        const norm = z / (ancho / 2);
+        // altura sigue la curva coseno (igual que el techo)
+        const y = alturaBase + alturaCurva * Math.cos(norm * Math.PI / 2);
+        puntos.push(new THREE.Vector3(xPos, y, z));
+      }
+      
+      const curva = new THREE.CatmullRomCurve3(puntos);
+      const geom = new THREE.TubeGeometry(curva, 30, 0.08, 8, false);  // radio 0.08 = delgada
+      const mesh = new THREE.Mesh(geom, matBlanco);
+      return mesh;
+    }
+    
+    // Poner una costilla cada 3m a lo largo del vagón
+    for (let x = -15; x <= 15; x += 3) {
+      grupo.add(crearCostilla(x));
+    }
+    
+    return grupo;
+  }
+  
+  const parteCostillas = crearCostillasTecho();
+  parteCostillas.position.y = 50;
+  estacion.add(parteCostillas);
+
+
+  scene.add(estacion);
+  estacion.visible = false;
+  console.log('Estación v5 creada');
+
+  // ============================================
+  // CARGA DEL VAGÓN (en vía derecha z=1.5)
+  // ============================================
+  const matCarroceria = new THREE.MeshStandardMaterial({ color: 0xcccccc, roughness: 0.5, metalness: 0.2 });
+  const matSilla = new THREE.MeshStandardMaterial({ color: 0x999999, roughness: 0.7, metalness: 0 });
+  const matVidrio = new THREE.MeshPhysicalMaterial({
+    color: 0xaaccdd, roughness: 0.05, metalness: 0,
+    transparent: true, opacity: 0.4,
+    transmission: 0.5, thickness: 0.1
+  });
+
+  let vagon = null;
+  let vagonInicialPos = new THREE.Vector3();
+  const scrollState = { progress: 0 };
+
+  const loader = new GLTFLoader();
+  loader.load('https://cdn.jsdelivr.net/gh/mariofdor/portfolio-assets@main/vagon_metro_bogota.glb', (gltf) => {
+    vagon = gltf.scene;
+
+    vagon.traverse((child) => {
+      if (child.isMesh) {
+        const original = child.material;
+        const nombreMat = (original?.name || '').toLowerCase();
+        const esVidrio = nombreMat.includes('glass') || nombreMat.includes('vidrio') || 
+                         nombreMat.includes('window') || nombreMat.includes('ventana') ||
+                         (original && original.transparent === true);
+        
+        if (esVidrio) {
+          child.material = matVidrio;
+        } else {
+          const localBox = new THREE.Box3().setFromObject(child);
+          const localSize = localBox.getSize(new THREE.Vector3());
+          const volumen = localSize.x * localSize.y * localSize.z;
+          if (volumen < 3 && localSize.y < 1.5) {
+            child.material = matSilla;
+          } else {
+            child.material = matCarroceria;
+          }
+        }
+      }
+    });
+
+    const boxInicial = new THREE.Box3().setFromObject(vagon);
+    const sizeInicial = boxInicial.getSize(new THREE.Vector3());
+    if (sizeInicial.z > sizeInicial.x && sizeInicial.z > sizeInicial.y) {
+      vagon.rotation.y = Math.PI / 2;
+    } else if (sizeInicial.y > sizeInicial.x) {
+      vagon.rotation.z = Math.PI / 2;
+    }
+    const box = new THREE.Box3().setFromObject(vagon);
+    const center = box.getCenter(new THREE.Vector3());
+    vagon.position.sub(center);
+    const size = box.getSize(new THREE.Vector3());
+    vagon.position.y += size.y / 2;
+    const escalaCorreccion = 20 / size.x;
+    vagon.scale.setScalar(escalaCorreccion);
+    const boxFinal = new THREE.Box3().setFromObject(vagon);
+    const centerFinal = boxFinal.getCenter(new THREE.Vector3());
+    vagon.position.sub(centerFinal);
+    const sizeFinal = boxFinal.getSize(new THREE.Vector3());
+    vagon.position.y += sizeFinal.y / 2;
+    
+    // Vagón principal (posición inicial)
+    vagon.position.z = -5.5;
+    vagonInicialPos.copy(vagon.position);
+    scene.add(vagon);
+    
+    // Clonar 6 vagones más detrás (total = 7 vagones, como el CRRC real)
+    // Cada vagón mide 20m, se colocan uno detrás del otro
+    const LARGO_VAGON = 20;
+    const NUM_CLONES = 6;
+    const vagonesClones = [];
+    
+    for (let i = 1; i <= NUM_CLONES; i++) {
+      const clon = vagon.clone();
+      // El clon va hacia +X (detrás del vagón principal, que va hacia -X cuando avanza)
+      clon.position.x = vagon.position.x + (LARGO_VAGON * i);
+      clon.position.y = vagon.position.y;
+      clon.position.z = vagon.position.z;
+      scene.add(clon);
+      vagonesClones.push(clon);
+    }
+    
+    // Guardar los clones globalmente para poder moverlos con el scroll
+    window.__vagonesClones = vagonesClones;
+    console.log('Vagon size FINAL:', sizeFinal, 'Posicion inicial:', vagonInicialPos);
+  });
+
+  // ============================================
+  // COREOGRAFÍA FLUIDA (sin saltos)
+  // 0-42%: cámara se mueve continuamente por 4 waypoints
+  // 42-100%: recorrido interior
+  // El vagón se desplaza entre 15-40%
+  // La estación es 100% estática
+  // ============================================
+  const ALTURA_OJOS = 2.5;
+
+  // Waypoints (todos apuntan a z=1.5 donde está el vagón)
+  const camP0 = { pos: new THREE.Vector3(51, 12.5, -2.2), look: new THREE.Vector3(0, -17.5, -1.8) };
+  const camP1 = { pos: new THREE.Vector3(40, ALTURA_OJOS, -1.8), look: new THREE.Vector3(-30, ALTURA_OJOS, -5.8) };
+  const camP2 = { pos: new THREE.Vector3(0, 3, 7.0), look: new THREE.Vector3(0, ALTURA_OJOS - 1, -1.8) };
+  const camP3 = { pos: new THREE.Vector3(-27.9, 5, 35.0), look: new THREE.Vector3(0, 0, -1.8) };
+  const camP4 = { pos: new THREE.Vector3(-29.9, 5, 35.0), look: new THREE.Vector3(0, 0, -1.8) };
+
+  // Interior (arranca EXACTAMENTE donde termina camP3, sin salto)
+  const posEntradaInt = camP3.pos.clone();
+  const lookEntradaInt = camP3.look.clone();
+  const posSalidaInt = new THREE.Vector3(3, ALTURA_OJOS, -1.8);
+  const lookSalidaInt = new THREE.Vector3(12, ALTURA_OJOS, -1.8);
+
+  // Desplazamiento del vagón
+  const vagonDesplazamiento = -30;
+
+  const tmpLook = new THREE.Vector3();
+
+  function interpolarCamara(p) {
+    if (p < 0.4) {
+      const t = p / 0.4;
+      camera.position.lerpVectors(camP0.pos, camP1.pos, t);
+      tmpLook.lerpVectors(camP0.look, camP1.look, t);
+    } else if (p < 0.55) {
+      camera.position.copy(camP1.pos);
+      tmpLook.copy(camP1.look);
+    } else if (p < 0.80) {
+      const t = (p - 0.55) / 0.25;
+      camera.position.lerpVectors(camP1.pos, camP2.pos, t);
+      tmpLook.lerpVectors(camP1.look, camP2.look, t);
+    } else if (p < 0.88) {
+      camera.position.copy(camP2.pos);
+      tmpLook.copy(camP2.look);
+    } else if (p < 0.93) {
+      const t = (p - 0.88) / 0.05;
+      camera.position.lerpVectors(camP2.pos, camP3.pos, t);
+      tmpLook.lerpVectors(camP2.look, camP3.look, t);
+    } else {
+      const t = (p - 0.93) / 0.07;
+      camera.position.lerpVectors(camP3.pos, camP4.pos, t);
+      tmpLook.copy(camP4.look);
+    }
+    camera.lookAt(tmpLook);
+  }
+
+  function updateScene() {
+    const p = scrollState.progress;
+    let modo = '';
+
+     interpolarCamara(p);
+     modo = 'FLUIDO';
+
+    // Movimiento del vagón principal y sus clones (todos se mueven juntos)
+    if (vagon) {
+      const offset = vagonDesplazamiento * p;
+      vagon.position.x = vagonInicialPos.x + offset;
+      
+      // Mover clones (cada uno a 20m de distancia del anterior)
+      if (window.__vagonesClones) {
+        window.__vagonesClones.forEach((clon, i) => {
+          clon.position.x = vagonInicialPos.x + offset + (20 * (i + 1));
+        });
+      }
+    }
+
+    // Beats
+    document.querySelector('.beat[data-beat="1"]')?.classList.toggle('active', p < 0.05);
+    document.querySelector('.beat[data-beat="2"]')?.classList.toggle('active', p >= 0.15 && p < 0.35);
+    document.querySelector('.beat[data-beat="3"]')?.classList.toggle('active', p >= 0.55 && p < 0.90);
+
+    if (debugEl) {
+      debugEl.textContent = `${(p * 100).toFixed(1)}% | ${modo} | cam(${camera.position.x.toFixed(1)}, ${camera.position.y.toFixed(1)}, ${camera.position.z.toFixed(1)})`;
+    }
+  }
+
+  const heroSection = document.getElementById('vagon-hero');
+
+
+  function animarEstacionPorScroll(p) {
+    estacion.visible = p > 0;
+
+    // Vidrios y techo caen desde arriba después de que sube la columna
+    function caer(obj, inicio, fin, endY) {
+      const t = Math.max(0, Math.min(1, (p - inicio) / (fin - inicio)));
+      const ease = 1 - Math.pow(1 - t, 3);
+      obj.position.y = 50 - (50 - endY) * ease;
+    }
+
+    // Hacer visible grupoVidriosInt
+    grupoVidriosInt.visible = p > 0.55;
+
+    caer(grupoVidriosInt, 0.55, 0.72,  0);
+    caer(parteVidrio1,    0.72, 0.87,  0);
+    caer(parteVidrio2,    0.75, 0.88,  0);
+    caer(parteCostillas,  0.82, 0.90,  0);
+    // Techo cae al final
+    parteTecho.visible = true;
+    caer(parteTecho, 0.90, 1.00, 5.6);
+
+    // De abajo hacia arriba — ajusta endY de cada parte aquí
+    function mover(obj, inicio, fin, endY) {
+      const t = Math.max(0, Math.min(1, (p - inicio) / (fin - inicio)));
+      const ease = 1 - Math.pow(1 - t, 3);
+      obj.position.y = -50 + (50 + endY) * ease;
+    }
+
+    mover(columna,      0.00, 0.25,  -10);
+    mover(parteLosa,    0.10, 0.35,    0);
+    mover(parteCapitel, 0.20, 0.45,   -1);
+    mover(andenDer,     0.30, 0.55,  0.55);
+  }
+
+  function onScroll() {
+    if (!heroSection) return;
+    const rect = heroSection.getBoundingClientRect();
+    const totalScroll = heroSection.offsetHeight - window.innerHeight;
+    const scrolled = -rect.top;
+    const globalProgress = Math.max(0, Math.min(1, scrolled / totalScroll));
+    
+    const vid = document.getElementById('dron-video');
+    const canvas = document.getElementById('vagon-canvas-container');
+    
+    if (globalProgress <= 0.30) {
+      // Video 0-30%
+      if (vid && vid.duration) {
+        vid.style.display = 'block';
+        vid.currentTime = (globalProgress / 0.30) * vid.duration;
+      }
+      if (canvas) canvas.style.display = 'none';
+      scrollState.progress = 0;
+    } else {
+      // 3D 30-100%
+      if (vid) vid.style.display = 'none';
+      if (canvas) canvas.style.display = 'block';
+      if (globalProgress < 0.85) {
+        scrollState.progress = (globalProgress - 0.30) / 0.55;
+      } else {
+        scrollState.progress = 1;
+        const pEstacion = (globalProgress - 0.85) / 0.15;
+        animarEstacionPorScroll(pEstacion);
+      }
+      updateScene();
+    }
+  }
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+
+  function animate() {
+    requestAnimationFrame(animate);
+    renderer.render(scene, camera);
+  }
+  animate();
+
+</script>
+</body>
+</html>
